@@ -63,7 +63,7 @@ func newTorrent(path string) (Torrent, error) {
 
 func calculateSize(path string, worker *sync.WaitGroup) {
 	defer worker.Done()
-	torrent, err := newTorrent(arguments.Input + "/" + path)
+	torrent, err := newTorrent(path)
 	if err != nil {
 		fmt.Println(crossPre +
 			color.Yellow(" [") +

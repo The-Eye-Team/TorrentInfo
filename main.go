@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"sync"
 
-	humanize "github.com/dustin/go-humanize"
+	"github.com/dustin/go-humanize"
 	"github.com/labstack/gommon/color"
 )
 
@@ -40,19 +40,35 @@ func main() {
 			color.Red("Invalid input folder."))
 	}
 
-	files, err := ioutil.ReadDir(arguments.Input)
-	if err != nil {
-		log.Fatal(err)
-	}
+	fmt.Println(color.Green("Collecting Files..."))
+	var files []string
+	err = filepath.Walk(arguments.Input, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			return nil
+		}
+
+		files = append(files, path)
+
+		return nil
+	})
+
 	stats.NbFiles = len(files)
-	for _, f := range files {
+	for _, path := range files {
 		worker.Add(1)
 		count++
-		go calculateSize(f.Name(), &worker)
+		go calculateSize(path, &worker)
 		if count == arguments.Concurrency {
 			worker.Wait()
 			count = 0
 		}
+	}
+
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	worker.Wait()
