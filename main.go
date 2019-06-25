@@ -12,9 +12,10 @@ import (
 )
 
 var stats = struct {
-	Size    int
-	Index   int
-	NbFiles int
+	Size      uint64
+	FileCount uint64
+	Index     int
+	NbFiles   int
 }{}
 
 var checkPre = color.Yellow("[") + color.Green("✓") + color.Yellow("]")
@@ -60,7 +61,7 @@ func main() {
 	for _, path := range files {
 		worker.Add(1)
 		count++
-		go calculateSize(path, &worker)
+		go readTorrentFile(path, &worker)
 		if count == arguments.Concurrency {
 			worker.Wait()
 			count = 0
@@ -80,5 +81,7 @@ func main() {
 		color.Green(stats.NbFiles) +
 		color.Yellow("] ") +
 		color.Green(" Total size: ") +
-		color.Yellow(humanize.Bytes(uint64(stats.Size))))
+		color.Yellow(humanize.Bytes(stats.Size)) +
+		color.Green(" Total filecount: ") +
+		color.Yellow(stats.FileCount))
 }

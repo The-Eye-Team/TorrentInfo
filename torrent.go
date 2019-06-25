@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"sync/atomic"
 
-	bencode "github.com/jackpal/bencode-go"
+	"github.com/jackpal/bencode-go"
 	"github.com/labstack/gommon/color"
 )
 
@@ -61,7 +62,7 @@ func newTorrent(path string) (Torrent, error) {
 	return Torrent{Path: path, Data: info}, nil
 }
 
-func calculateSize(path string, worker *sync.WaitGroup) {
+func readTorrentFile(path string, worker *sync.WaitGroup) {
 	defer worker.Done()
 	torrent, err := newTorrent(path)
 	if err != nil {
@@ -74,8 +75,10 @@ func calculateSize(path string, worker *sync.WaitGroup) {
 			color.Red("Error: ") +
 			color.Yellow(err.Error()))
 	}
+	atomic.AddUint64(&stats.FileCount, uint64(len(torrent.Data.Info.Files)))
+
 	for _, file := range torrent.Data.Info.Files {
-		stats.Size += file.Length
+		atomic.AddUint64(&stats.Size, uint64(file.Length))
 	}
 	fmt.Println(checkPre +
 		color.Yellow(" [") +
@@ -83,7 +86,7 @@ func calculateSize(path string, worker *sync.WaitGroup) {
 		color.Yellow("/") +
 		color.Green(stats.NbFiles) +
 		color.Yellow("] ") +
-		color.Green(" Extracted size from ") +
+		color.Green(" Extracted infos from ") +
 		color.Yellow(path))
 	stats.Index++
 }

@@ -14,14 +14,14 @@ var arguments = struct {
 
 func parseArgs(args []string) {
 	// Create new parser object
-	parser := argparse.NewParser("TorrentSize", "Get total size of a folder full of .torrent")
+	parser := argparse.NewParser("TorrentInfo", "Get infos of a folder full of .torrent")
 
 	// Create flags
 	input := parser.String("i", "input", &argparse.Options{
 		Required: true,
 		Help:     "Input directory"})
 
-	concurrency := parser.Int("j", "concurrency", &argparse.Options{
+	concurrency := parser.Int("c", "concurrency", &argparse.Options{
 		Required: false,
 		Help:     "Concurrency",
 		Default:  4})

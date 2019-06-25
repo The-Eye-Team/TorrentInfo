@@ -1,29 +1,29 @@
-# TorrentSize
+# TorrentInfo
 Get total size of a folder full of .torrent
 
 # Usage
 
-You can find releases for various operating systems in the [releases tab](https://github.com/The-Eye-Team/TorrentSize/releases).
+You can find releases for various operating systems in the [releases tab](https://github.com/The-Eye-Team/TorrentInfo/releases).
 
 Download one, then make it executable:
 
 ```
-chmod +x TorrentSize
+chmod +x TorrentInfo
 ```
 
 Sample usage with a folder called `torrents` with your torrent files inside:
 
 ```
-./TorrentSize -i torrents/
+./TorrentInfo -i torrents/
 ```
 
 You can see the options with the `-h` flag:
 
 ```
-TorrentSize [-h|--help] -i|--input "<value>" [-j|--concurrency
+TorrentInfo [-h|--help] -i|--input "<value>" [-j|--concurrency
                    <integer>]
 
-                   Get total size of a folder full of .torrent
+                   Get infos of a folder full of .torrent
 
 Arguments:
 
@@ -35,7 +35,7 @@ Arguments:
 # Build
 
 ```
-git clone https://github.com/The-Eye-Team/TorrentSize.git && cd TorrentSize
+git clone https://github.com/The-Eye-Team/TorrentInfo.git && cd TorrentInfo
 ```
 
 ```
