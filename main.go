@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -11,12 +12,29 @@ import (
 	"github.com/labstack/gommon/color"
 )
 
-var stats = struct {
-	Size      uint64
-	FileCount uint64
-	Index     int
-	NbFiles   int
-}{}
+type Stats struct {
+	Size      uint64         `json:"size"`
+	FileCount uint64         `json:"filecount"`
+	Torrents  []*TorrentInfo `json:"torrents"`
+
+	Index   int
+	NbFiles int
+	mtx     sync.Mutex //For the Torrents
+}
+
+type TorrentInfo struct {
+	Name      string      `json:"name"`
+	Size      uint64      `json:"size"`
+	FileCount uint64      `json:"filecount"`
+	Files     []*FileInfo `json:"files"`
+}
+
+type FileInfo struct {
+	Name string `json:"name"`
+	Size uint64 `json:"size"`
+}
+
+var stats = Stats{}
 
 var checkPre = color.Yellow("[") + color.Green("✓") + color.Yellow("]")
 var tildPre = color.Yellow("[") + color.Green("~") + color.Yellow("]")
@@ -33,7 +51,7 @@ func main() {
 	parseArgs(os.Args)
 
 	// Check if input folder exist
-	if _, err := os.Stat(arguments.Input); os.IsNotExist(err) {
+	if _, err := os.Stat(arguments.Input); os.IsNotExist(err) && !arguments.Json {
 		fmt.Println(crossPre +
 			color.Yellow(" [") +
 			color.Red(arguments.Input) +
@@ -41,7 +59,9 @@ func main() {
 			color.Red("Invalid input folder."))
 	}
 
-	fmt.Println(color.Green("Collecting Files..."))
+	if !arguments.Json {
+		fmt.Println(color.Green("Collecting Files..."))
+	}
 	var files []string
 	err = filepath.Walk(arguments.Input, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -74,14 +94,22 @@ func main() {
 
 	worker.Wait()
 
-	fmt.Println(checkPre +
-		color.Yellow(" [") +
-		color.Green(stats.Index-1) +
-		color.Yellow("/") +
-		color.Green(stats.NbFiles) +
-		color.Yellow("] ") +
-		color.Green(" Total size: ") +
-		color.Yellow(humanize.Bytes(stats.Size)) +
-		color.Green(" Total filecount: ") +
-		color.Yellow(stats.FileCount))
+	if arguments.Json {
+		data, err := json.Marshal(stats)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(string(data))
+	} else {
+		fmt.Println(checkPre +
+			color.Yellow(" [") +
+			color.Green(stats.Index-1) +
+			color.Yellow("/") +
+			color.Green(stats.NbFiles) +
+			color.Yellow("] ") +
+			color.Green(" Total size: ") +
+			color.Yellow(humanize.Bytes(stats.Size)) +
+			color.Green(" Total filecount: ") +
+			color.Yellow(stats.FileCount))
+	}
 }

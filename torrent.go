@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -13,9 +14,9 @@ import (
 
 // File available as part of the torrent
 type File struct {
-	Length int    `bencode:"length"`
-	Md5sum string `bencode:"md5sum"`
-	Path   string `bencode:"path"`
+	Length int      `bencode:"length"`
+	Md5sum []byte   `bencode:"md5sum"`
+	Path   []string `bencode:"path"`
 }
 
 // MetaInfoData hold data about the download itself
@@ -65,7 +66,7 @@ func newTorrent(path string) (Torrent, error) {
 func readTorrentFile(path string, worker *sync.WaitGroup) {
 	defer worker.Done()
 	torrent, err := newTorrent(path)
-	if err != nil {
+	if err != nil && !arguments.Json {
 		fmt.Println(crossPre +
 			color.Yellow(" [") +
 			color.Red(stats.Index) +
@@ -75,18 +76,39 @@ func readTorrentFile(path string, worker *sync.WaitGroup) {
 			color.Red("Error: ") +
 			color.Yellow(err.Error()))
 	}
-	atomic.AddUint64(&stats.FileCount, uint64(len(torrent.Data.Info.Files)))
 
-	for _, file := range torrent.Data.Info.Files {
-		atomic.AddUint64(&stats.Size, uint64(file.Length))
+	ti := &TorrentInfo{
+		Name:      torrent.Data.Info.Name,
+		FileCount: uint64(len(torrent.Data.Info.Files)),
 	}
-	fmt.Println(checkPre +
-		color.Yellow(" [") +
-		color.Green(stats.Index) +
-		color.Yellow("/") +
-		color.Green(stats.NbFiles) +
-		color.Yellow("] ") +
-		color.Green(" Extracted infos from ") +
-		color.Yellow(path))
+
+	var size uint64
+	for _, f := range torrent.Data.Info.Files {
+		ti.Files = append(ti.Files, &FileInfo{
+			Name: strings.Join(f.Path, "/"),
+			Size: uint64(f.Length),
+		})
+		size += uint64(f.Length)
+	}
+
+	ti.Size = size
+
+	atomic.AddUint64(&stats.FileCount, ti.FileCount)
+	atomic.AddUint64(&stats.Size, size)
+
+	stats.mtx.Lock()
+	stats.Torrents = append(stats.Torrents, ti)
+	stats.mtx.Unlock()
+
+	if !arguments.Json {
+		fmt.Println(checkPre +
+			color.Yellow(" [") +
+			color.Green(stats.Index) +
+			color.Yellow("/") +
+			color.Green(stats.NbFiles) +
+			color.Yellow("] ") +
+			color.Green(" Extracted infos from ") +
+			color.Yellow(path))
+	}
 	stats.Index++
 }

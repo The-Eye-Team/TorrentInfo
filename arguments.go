@@ -10,6 +10,7 @@ import (
 var arguments = struct {
 	Input       string
 	Concurrency int
+	Json        bool
 }{}
 
 func parseArgs(args []string) {
@@ -26,6 +27,12 @@ func parseArgs(args []string) {
 		Help:     "Concurrency",
 		Default:  4})
 
+	json := parser.Flag("j", "json", &argparse.Options{
+		Required: false,
+		Help:     "JSON Encoded Output",
+		Default:  false,
+	})
+
 	// Parse input
 	err := parser.Parse(args)
 	if err != nil {
@@ -38,4 +45,5 @@ func parseArgs(args []string) {
 	// Fill arguments structure
 	arguments.Input = *input
 	arguments.Concurrency = *concurrency
+	arguments.Json = *json
 }
